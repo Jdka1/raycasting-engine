@@ -6,7 +6,9 @@ let heading = 0;
 const quality = 0.2;
 const fov = 60;
 
-const sceneW = fov*23
+let sceneW = fov*23
+
+const wallDimensions = {w: 1000, h: 1000};
 
 const speed = 1.5;
 const rotateSpeed = 0.05;
@@ -20,8 +22,7 @@ let checkbox2d;
 let show2d = false;
 
 
-// add crosshair
-// fix distortion
+// add panning on y axis
 // change to classes
 // draw maze
 // auto generate maze
@@ -29,25 +30,30 @@ let show2d = false;
 
 function setup() {
   noCursor();
-  createCanvas(600+sceneW, 700);
+  createCanvas(windowWidth, windowHeight-80);
 
   let sensitivitySliderCaption = createElement('p', 'Sensitivity');
   sensitivitySliderCaption.style('margin-bottom', '0');
-  sensitivitySlider = createSlider(0.1,2,0.8,0.05);
+  sensitivitySlider = createSlider(0.1,2,0.65,0.05);
   checkbox = createCheckbox('Hide 2d layout', true);
   checkbox.changed(() => {
     show2d = !show2d;
+    if (show2d) {
+      resizeCanvas(windowWidth, wallDimensions.h);
+    } else {
+      resizeCanvas(windowWidth, windowHeight-80);
+    }
   });
 
 
-  walls.push(new Wall(0,0,width-sceneW,0));
-  walls.push(new Wall(width-sceneW,0,width-sceneW,height));
-  walls.push(new Wall(0,height,width-sceneW,height));
-  walls.push(new Wall(0,0,0,height));
+  walls.push(new Wall(0,0,wallDimensions.w,0));
+  walls.push(new Wall(wallDimensions.w,0,wallDimensions.w,wallDimensions.h));
+  walls.push(new Wall(0,wallDimensions.h,wallDimensions.w,wallDimensions.h));
+  walls.push(new Wall(0,0,0,wallDimensions.h));
 
 
   for (let i=0; i<5; i++) {
-    walls.push(new Wall(random(width-sceneW),random(height),random(width-sceneW),random(height)));
+    walls.push(new Wall(random(wallDimensions.w),random(wallDimensions.h),random(wallDimensions.w),random(wallDimensions.h)));
   }
 
   for (let i=0; i<fov; i+=quality) {
@@ -57,12 +63,6 @@ function setup() {
 
 function draw() {
   background(0);
-  if (show2d) {
-    print('hi');
-    resizeCanvas(600+sceneW, 700);
-  } else {
-    resizeCanvas(windowWidth, windowHeight-80);
-  }
 
 
   if (show2d) {
@@ -73,7 +73,6 @@ function draw() {
 
     rays.forEach((ray) => {
       ray.show();
-      // ray.pos = createVector(mouseX,mouseY);
     })
   }
 
@@ -101,15 +100,14 @@ function draw() {
     v.mult(speed);
     move(v);
   }
-
   
 
   
   if (show2d) {
     fill('blue');
-    rect(width-sceneW,height/2,sceneW,height/2);
+    rect(wallDimensions.w,height/2,width-wallDimensions.w,height/2);
     fill('black');
-    rect(width-sceneW,0,sceneW,height/2);
+    rect(wallDimensions.w,0,width-wallDimensions.w,height/2);
   } else {
     fill('blue');
     rect(0,height/2,width,height/2);
@@ -119,7 +117,16 @@ function draw() {
 
   drawScene(castRays());
 
-
+  if (show2d) {
+    fill('blue');
+    rect(wallDimensions.w,height/2,width-wallDimensions.w,height/2);
+    fill('black');
+    rect(wallDimensions.w,0,width-wallDimensions.w,height/2);
+  } else {
+    stroke('red');
+    strokeWeight(6.5);
+    point(width/2,height/1.8);
+  }
 }
 
 
@@ -154,7 +161,7 @@ function move(dir) {
 function drawScene(dists) {
   push();
   if (show2d) {
-    translate(width-sceneW,0)
+    translate(wallDimensions.w,0);
     stroke('red');
     strokeWeight(1);
     rect(-4,0,1,height);
@@ -204,7 +211,7 @@ function castRays() {
         let a = rays[i].dir.heading() - heading;
         if (d < record.dist) {
           record.dist = d;
-          d *= cos(a);
+          d *= sqrt(cos(a));
           record.cosdist = d;
           closest = pt;
         }
