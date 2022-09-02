@@ -3,7 +3,7 @@ let rays = [];
 
 let heading = 0;
 
-const quality = 0.2;
+const quality = 0.15;
 const fov = 60;
 
 let sceneW = fov*23
@@ -13,7 +13,6 @@ const wallDimensions = {w: 1000, h: 1000};
 const speed = 1.5;
 const rotateSpeed = 0.05;
 
-let vertCamAngle = 0;
 
 let sensitivitySlider;
 
@@ -21,16 +20,25 @@ let checkbox2d;
 
 let show2d = false;
 
+let fpsHandsImg;
+let showHands = true;
 
-// add panning on y axis
+let panY = 0;
+
+
 // change to classes
 // draw maze
 // auto generate maze
 // add circle line collision
 
+function preload() {
+  fpsHandsImg = loadImage('assets/hands.png');
+}
+
+
 function setup() {
   noCursor();
-  createCanvas(windowWidth, windowHeight-80);
+  createCanvas(windowWidth, windowHeight);
 
   let sensitivitySliderCaption = createElement('p', 'Sensitivity');
   sensitivitySliderCaption.style('margin-bottom', '0');
@@ -41,7 +49,7 @@ function setup() {
     if (show2d) {
       resizeCanvas(windowWidth, wallDimensions.h);
     } else {
-      resizeCanvas(windowWidth, windowHeight-80);
+      resizeCanvas(windowWidth, windowHeight);
     }
   });
 
@@ -63,6 +71,9 @@ function setup() {
 
 function draw() {
   background(0);
+
+  panY = map(mouseY,0,height,height,-height)*2.5;
+  
 
 
   if (show2d) {
@@ -110,9 +121,9 @@ function draw() {
     rect(wallDimensions.w,0,width-wallDimensions.w,height/2);
   } else {
     fill('blue');
-    rect(0,height/2,width,height/2);
+    rect(0,height/2+panY,width,height/2-panY);
     fill('black');
-    rect(0,0,width,height/2);
+    rect(0,0,width,height/2+panY);
   }
 
   drawScene(castRays());
@@ -127,17 +138,10 @@ function draw() {
     strokeWeight(6.5);
     point(width/2,height/1.8);
   }
-}
 
-
-function setGradient(x, y, w, h, c1, c2) {
-  noFill();
-
-  for (let i = y; i <= y + h; i++) {
-    let inter = map(i, y, y + h, 0, 1);
-    let c = lerpColor(c1, c2, inter);
-    stroke(c);
-    line(x, i, x + w, i);
+  if (showHands) {
+    image(fpsHandsImg, width/2-700, height-520, 560,650, 0,0,500,0);
+    image(fpsHandsImg, width/2+300, height-520, 560,650, 500,0,500,0);
   }
 }
 
@@ -165,6 +169,8 @@ function drawScene(dists) {
     stroke('red');
     strokeWeight(1);
     rect(-4,0,1,height);
+  } else {
+    translate(0,panY);
   }
 
 
@@ -181,11 +187,11 @@ function drawScene(dists) {
   for (let i=0; i<dists.length; i++) {
     const sq = dists[i].dist*dists[i].dist;
     const wSq = (width-sceneW)*(width-sceneW);
-    // const s = map(sq,0,wSq,255,0);
 
     const s = map(dists[i].dist,0,700,255,0);
 
     let h = 100000/dists[i].cosdist;
+    h*=0.5
     fill(s);
     rect(i*w,height/2,w+0.5,h);
   }
